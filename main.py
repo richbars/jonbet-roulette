@@ -64,6 +64,8 @@ async def run_simulations(show_details: bool = True):
         scenarios = [
             ("Branco após Branco", lambda: simulator.simulate_white_after_white()),
             ("Branco após Branco (Stop on Win)", lambda: simulator.simulate_white_after_white_stop_on_win()),
+            ("Maior número de PRETOS em sequência", lambda: simulator.simulate_longest_black_streak()),
+            ("Maior número de VERDE em sequência", lambda: simulator.simulate_longest_green_streak())
             # ("Preto após 6x Verde", lambda: simulator.simulate_black_after_6_green()),
             # ("Preto após 3x Branco", lambda: simulator.simulate_opposite_after_streak(0, 3, 2)),
             # ("Branco após 5x Preto", lambda: simulator.simulate_opposite_after_streak(2, 5, 0)),

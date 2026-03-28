@@ -65,6 +65,46 @@ class AnalyticsService:
         """
         return await self.postgres.fetch_all(query, (n,))
 
+    async def get_longest_color_streak(self, color: int, limit: int = 1000) -> dict:
+        """
+        Retorna o maior streak (sequência) consecutivo de uma cor específica.
+
+        Args:
+            color: 1=VERDE, 2=PRETO
+            limit: quantidade de spins a considerar
+
+        Returns:
+            {"color": "PRETO", "longest_streak": 4, "start_index": 10, "end_index": 13}
+        """
+        spins = await self.get_all_spins(limit)
+        spins.reverse()  # ordem cronológica
+
+        longest_streak = 0
+        current_streak = 0
+        start_index = None
+        end_index = None
+        temp_start = None
+
+        for i, spin in enumerate(spins):
+            if spin["color"] == color:
+                current_streak += 1
+                if temp_start is None:
+                    temp_start = i
+                if current_streak > longest_streak:
+                    longest_streak = current_streak
+                    start_index = temp_start
+                    end_index = i
+            else:
+                current_streak = 0
+                temp_start = None
+
+        return {
+            "color": self.COLOR_MAP.get(color, color),
+            "longest_streak": longest_streak,
+            "start_index": start_index,
+            "end_index": end_index
+        }
+
     async def detect_pattern_green_sequence(self, sequence_length: int = 6) -> PatternResult:
         """
         Detecta se houve uma sequência de N verdes seguidos.

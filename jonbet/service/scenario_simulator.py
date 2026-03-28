@@ -143,6 +143,77 @@ class ScenarioSimulator:
             description="Sempre que sair BRANCO (0), apostar que o próximo será BRANCO"
         )
 
+    async def simulate_longest_black_streak(self, limit: int = 10000) -> ScenarioResult:
+        """Analisa o maior streak consecutivo de PRETO (2)"""
+        spins = await self.get_all_spins(limit)
+        spins.reverse()
+
+        longest_streak = 0
+        current_streak = 0
+        start_index = None
+        end_index = None
+        temp_start = None
+
+        for i, spin in enumerate(spins):
+            if spin["color"] == 2:
+                current_streak += 1
+                if temp_start is None:
+                    temp_start = i
+                if current_streak > longest_streak:
+                    longest_streak = current_streak
+                    start_index = temp_start
+                    end_index = i
+            else:
+                current_streak = 0
+                temp_start = None
+
+        return ScenarioResult(
+            scenario_name="Maior sequência de PRETO",
+            description="Analisa o maior streak consecutivo de PRETO (2)",
+            total_spins_analyzed=len(spins),
+            total_bets=0,
+            wins=0,
+            losses=0,
+            max_win_streak=longest_streak,
+            bets=[]
+        )
+
+    async def simulate_longest_green_streak(self, limit: int = 10000) -> ScenarioResult:
+        """Analisa o maior streak consecutivo de VERDE (1)"""
+        spins = await self.get_all_spins(limit)
+        spins.reverse()
+
+        longest_streak = 0
+        current_streak = 0
+        start_index = None
+        end_index = None
+        temp_start = None
+
+        for i, spin in enumerate(spins):
+            if spin["color"] == 1:
+                current_streak += 1
+                if temp_start is None:
+                    temp_start = i
+                if current_streak > longest_streak:
+                    longest_streak = current_streak
+                    start_index = temp_start
+                    end_index = i
+            else:
+                current_streak = 0
+                temp_start = None
+
+        return ScenarioResult(
+            scenario_name="Maior sequência de VERDE",
+            description="Analisa o maior streak consecutivo de VERDE (1)",
+            total_spins_analyzed=len(spins),
+            total_bets=0,
+            wins=0,
+            losses=0,
+            max_win_streak=longest_streak,
+            bets=[]
+        )
+
+
     async def simulate_white_after_white_stop_on_win(self, limit: int = 10000) -> ScenarioResult:
         """
         Cenário: Se saiu BRANCO, apostar no próximo para BRANCO.
