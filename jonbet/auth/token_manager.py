@@ -103,8 +103,23 @@ class TokenManager:
     def _run_playwright_sync(self) -> str | None:
         from seleniumbase import SB
 
-        with SB(uc=True, headless=True) as sb:
+        with SB(uc=True, headless=True, chromium_arg="--lang=pt-BR") as sb:
             sb.execute_cdp_cmd("Network.enable", {})
+
+            sb.execute_cdp_cmd("Network.setExtraHTTPHeaders", {
+                "headers": {
+                    "Accept-Language": "pt-BR,pt;q=0.9"
+                }
+            })
+
+            sb.execute_cdp_cmd("Emulation.setLocaleOverride", {
+                "locale": "pt-BR"
+            })
+
+            sb.execute_cdp_cmd("Emulation.setTimezoneOverride", {
+                "timezoneId": "America/Sao_Paulo"
+            })
+
             sb.open("https://jonbet.bet.br/pt/?modal=auth")
 
             try:
