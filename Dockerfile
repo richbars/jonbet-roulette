@@ -1,20 +1,3 @@
-FROM python:3.13-slim AS builder
-
-WORKDIR /app
-
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-RUN apt-get update && apt-get install -y \
-    gcc \
-    libpq-dev \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
-
-RUN pip install --upgrade pip && \
-    pip install --prefix=/install --no-cache-dir -r requirements.txt
-
 FROM python:3.13-slim
 
 WORKDIR /app
@@ -22,14 +5,46 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
+# 🔥 Dependências do sistema + Chrome
 RUN apt-get update && apt-get install -y \
-    libpq5 \
+    wget \
+    gnupg \
+    unzip \
+    curl \
+    ca-certificates \
+    fonts-liberation \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libx11-xcb1 \
+    libxcb1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libatk1.0-0 \
+    libcups2 \
+    libxshmfence1 \
+    libxfixes3 \
+    libxi6 \
+    libxtst6 \
+    libglib2.0-0 \
+    libdrm2 \
+    libxkbcommon0 \
+    libatspi2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
+# 🔥 Instalar Google Chrome
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/google.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
+    > /etc/apt/sources.list.d/google.list && \
+    apt-get update && \
+    apt-get install -y google-chrome-stable && \
+    rm -rf /var/lib/apt/lists/*
+
+# Python deps
 COPY --from=builder /install /usr/local
 COPY . .
-
-RUN pip install playwright && playwright install --with-deps
 
 EXPOSE 8000
 
