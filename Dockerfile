@@ -5,7 +5,7 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# 🔥 Dependências do sistema + Chrome
+# 🔥 Dependências do sistema (Chrome + libs)
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
@@ -42,9 +42,17 @@ RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearm
     apt-get install -y google-chrome-stable && \
     rm -rf /var/lib/apt/lists/*
 
-# Python deps
-COPY --from=builder /install /usr/local
+# 🔥 Copiar requirements e instalar Python deps
+COPY requirements.txt .
+
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# 🔥 Copiar projeto
 COPY . .
+
+# 🔥 Garantir que Chrome está acessível
+ENV CHROME_BIN=/usr/bin/google-chrome
 
 EXPOSE 8000
 

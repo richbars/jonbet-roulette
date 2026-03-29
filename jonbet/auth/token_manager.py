@@ -1,6 +1,7 @@
 import asyncio
-import time
+
 from curl_cffi import requests as curl_requests
+from seleniumbase import SB
 
 from config import settings
 from jonbet.db.redis_client import RedisClient
@@ -92,7 +93,6 @@ class TokenManager:
         return None
 
     async def _run_playwright(self) -> str | None:
-        from seleniumbase import SB
 
         logger.debug("Starting browser session...")
 
@@ -101,9 +101,15 @@ class TokenManager:
         return token
 
     def _run_playwright_sync(self) -> str | None:
-        from seleniumbase import SB
 
-        with SB(uc=True, headless=True, chromium_arg="--lang=pt-BR") as sb:
+        with SB(
+                uc=True,
+                headless=True,
+                binary_location="/usr/bin/google-chrome",
+                no_sandbox=True,
+                disable_gpu=True,
+                chromium_arg="--lang=pt-BR --disable-dev-shm-usage",
+        ) as sb:
             sb.execute_cdp_cmd("Network.enable", {})
 
             sb.execute_cdp_cmd("Network.setExtraHTTPHeaders", {
