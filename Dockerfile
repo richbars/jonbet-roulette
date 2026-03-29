@@ -5,13 +5,13 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# 🔥 Dependências do sistema (Chrome + libs)
+# 🔥 Instalar dependências BASE (incluindo wget + gpg)
 RUN apt-get update && apt-get install -y \
     wget \
     gnupg \
-    unzip \
     curl \
     ca-certificates \
+    unzip \
     fonts-liberation \
     libnss3 \
     libatk-bridge2.0-0 \
@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y \
     libatspi2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# 🔥 Instalar Google Chrome
+# 🔥 Agora sim pode usar wget + gpg
 RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/google.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
     > /etc/apt/sources.list.d/google.list && \
@@ -42,16 +42,15 @@ RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearm
     apt-get install -y google-chrome-stable && \
     rm -rf /var/lib/apt/lists/*
 
-# 🔥 Copiar requirements e instalar Python deps
+# Python deps
 COPY requirements.txt .
 
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# 🔥 Copiar projeto
+# Código
 COPY . .
 
-# 🔥 Garantir que Chrome está acessível
 ENV CHROME_BIN=/usr/bin/google-chrome
 
 EXPOSE 8000
