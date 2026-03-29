@@ -49,7 +49,7 @@ def load_settings() -> Settings:
         JONBET_PASSWORD=_get_env("JONBET_PASSWORD", required=True),
 
         # TOKEN
-        TOKEN_TTL_SECONDS=int(_get_env("TOKEN_TTL_SECONDS", 3600)),
+        TOKEN_TTL_SECONDS=int(_get_env("TOKEN_TTL_SECONDS", 36000)),
 
         # POSTGRES
         POSTGRES_URL=_get_env("POSTGRES_URL", None),

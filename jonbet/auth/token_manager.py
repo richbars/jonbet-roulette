@@ -3,6 +3,8 @@ import asyncio
 from curl_cffi import requests as curl_requests
 from seleniumbase import SB
 
+from sbvirtualdisplay import Display
+
 from config import settings
 from jonbet.db.redis_client import RedisClient
 from logger import AppLogger
@@ -102,64 +104,94 @@ class TokenManager:
 
     def _run_playwright_sync(self) -> str | None:
 
-        with SB(
-                uc=True,
-                headless=True,
-                chromium_arg="--lang=pt-BR --disable-dev-shm-usage",
-        ) as sb:
-            sb.execute_cdp_cmd("Network.enable", {})
+        display = Display(visible=0, size=(1920, 1080))
+        display.start()
 
-            sb.execute_cdp_cmd("Network.setExtraHTTPHeaders", {
-                "headers": {
-                    "Accept-Language": "pt-BR,pt;q=0.9"
-                }
-            })
+        try:
+            with SB(
+                    uc=True,
+                    headless=False,
+                    chromium_arg="--lang=pt-BR --disable-dev-shm-usage",
+            ) as sb:
 
-            sb.execute_cdp_cmd("Emulation.setLocaleOverride", {
-                "locale": "pt-BR"
-            })
+                # 🔥 Configuração de rede e localização (stealth)
+                sb.execute_cdp_cmd("Network.enable", {})
 
-            sb.execute_cdp_cmd("Emulation.setTimezoneOverride", {
-                "timezoneId": "America/Sao_Paulo"
-            })
+                sb.execute_cdp_cmd("Network.setExtraHTTPHeaders", {
+                    "headers": {
+                        "Accept-Language": "pt-BR,pt;q=0.9"
+                    }
+                })
 
-            sb.open("https://jonbet.bet.br/pt/?modal=auth")
+                sb.execute_cdp_cmd("Emulation.setLocaleOverride", {
+                    "locale": "pt-BR"
+                })
 
-            try:
-                sb.click("text=EU TENHO MAIS DE 18 ANOS")
+                sb.execute_cdp_cmd("Emulation.setTimezoneOverride", {
+                    "timezoneId": "America/Sao_Paulo"
+                })
+
+                # 🔥 Abre site
+                sb.open("https://jonbet.bet.br/pt/?modal=auth")
+
+                # 🔥 Aceitar idade
+                try:
+                    sb.click("text=EU TENHO MAIS DE 18 ANOS")
+                    sb.sleep(1)
+                except Exception:
+                    pass
+
+                # 🔥 Cookies
+                try:
+                    sb.click("text=ACEITAR TODOS OS COOKIES")
+                    sb.sleep(1)
+                except Exception:
+                    pass
+
+                # 🔥 Login
+                sb.wait_for_element('input[name="username"]', timeout=10)
+
+                sb.type('input[name="username"]', settings.JONBET_USERNAME)
+                sb.sleep(0.5)
+
+                sb.type('input[type="password"]', settings.JONBET_PASSWORD)
                 sb.sleep(1)
-            except:
-                pass
 
-            try:
-                sb.click("text=ACEITAR TODOS OS COOKIES")
-                sb.sleep(1)
-            except:
-                pass
+                # 🔥 CAPTCHA (pode falhar, mas tentamos)
+                try:
+                    sb.uc_gui_click_captcha()
+                    sb.sleep(3)
+                except Exception as e:
+                    logger.warning(f"Captcha issue: {e}")
 
-            sb.wait_for_element('input[name="username"]', timeout=10)
-            sb.type('input[name="username"]', settings.JONBET_USERNAME)
-            sb.sleep(0.3)
-            sb.type('input[type="password"]', settings.JONBET_PASSWORD)
-            sb.sleep(0.5)
+                # 🔥 Submit login
+                sb.wait_for_element('button[data-testid="login-submit-button"]', timeout=10)
+                sb.click('button[data-testid="login-submit-button"]')
 
-            try:
-                sb.uc_gui_click_captcha()
-                sb.sleep(2)
-            except Exception as e:
-                logger.warning(f"Captcha not clicked: {e}")
+                # 🔥 Espera REAL pelo token (robusto)
+                refresh_token = None
+                for _ in range(20):  # até ~20 segundos
+                    refresh_token = sb.execute_script(
+                        "return localStorage.getItem('REFRESH_TOKEN');"
+                    )
+                    if refresh_token:
+                        break
+                    sb.sleep(1)
 
-            sb.click('button[data-testid="login-submit-button"]')
-            sb.sleep(5)
+                if not refresh_token:
+                    logger.warning("REFRESH_TOKEN not found in localStorage")
+                    return None
 
-            refresh_token = sb.execute_script("return localStorage.getItem('REFRESH_TOKEN');")
+                logger.info("Refresh token captured successfully")
+                return refresh_token
 
-            if not refresh_token:
-                logger.warning("REFRESH_TOKEN not found in localStorage")
-                return None
+        except Exception as e:
+            logger.error(f"Browser execution error: {e}")
+            return None
 
-            logger.info("Refresh token captured successfully")
-            return refresh_token
+        finally:
+            # 🔥 CRÍTICO: evita leak no container
+            display.stop()
 
     async def invalidate(self):
         logger.info(f"Invalidating token for key: {self.token_key}")

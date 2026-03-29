@@ -32,6 +32,9 @@ RUN apt-get update && apt-get install -y \
     libdrm2 \
     libxkbcommon0 \
     libatspi2.0-0 \
+    xvfb \
+    python3-tk \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 🔥 Agora sim pode usar wget + gpg
