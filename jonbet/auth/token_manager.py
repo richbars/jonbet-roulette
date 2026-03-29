@@ -105,9 +105,6 @@ class TokenManager:
         with SB(
                 uc=True,
                 headless=True,
-                binary_location="/usr/bin/google-chrome",
-                no_sandbox=True,
-                disable_gpu=True,
                 chromium_arg="--lang=pt-BR --disable-dev-shm-usage",
         ) as sb:
             sb.execute_cdp_cmd("Network.enable", {})
